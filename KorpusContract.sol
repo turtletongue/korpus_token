@@ -1,6 +1,11 @@
 // Указываем версию языка для компилятора.
 pragma solidity ^0.4.24;
 
+import "https://github.com/PlatonSterh/korpus_token/Ownable.sol";
+import "https://github.com/PlatonSterh/korpus_token/whitelistBuyers.sol";
+import "https://github.com/PlatonSterh/korpus_token/whitelistSellers.sol";
+import "https://github.com/PlatonSterh/korpus_token/SafeMath.sol";
+
 // Объявляем интерфейс токена инвестиции.
 interface KorpusToken_Investment {
     function mint(address _to, uint256 _amount) external;
