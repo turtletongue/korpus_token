@@ -1,62 +1,7 @@
 pragma solidity ^0.5.1;
 
-contract Ownable {
-    address public owner;
-    address public KorpusContract;
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    
-    /**
-     * Конструктор Ownable задаёт владельца контракта с помощью аккаунта отправителя
-     */
-    constructor() public {
-        owner = msg.sender;
-    }
-     /**
-     * Выбрасывает ошибку, если вызвана любым аккаунтом, кроме владельца или смарт-контракта обмена, покупки и продажи
-     */
-    modifier onlyOwner() {
-        require((msg.sender == owner) || (msg.sender == KorpusContract));
-        _;
-    }
-    /**
-     * Позволяет текущему владельцу перевести контроль над контрактом новому владельцу.
-     */
-    function transferOwnershipWallet(address newOwner) onlyOwner public {
-        require(newOwner != address(0));
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-    /**
-     * Позволяет назначить новый смарт-контракт обмена, покупки и продажи, передавая возможность вызывать функции.
-     */
-    function transferOwnershipContract(address newOwner) onlyOwner public {
-        require(newOwner != address(0));
-        emit OwnershipTransferred(KorpusContract, newOwner);
-        KorpusContract = newOwner;
-    }
-}
-
-// Библиотека для защиты от переполнения uint.
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
-    }
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
+import "https://github.com/PlatonSterh/korpus_token/Ownable.sol";
+import "https://github.com/PlatonSterh/korpus_token/SafeMath.sol";
 
 contract KorpusToken_Deposit is Ownable {
     
