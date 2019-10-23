@@ -19,7 +19,7 @@ interface KorpusToken_Deposit {
 }
 
 // Объявляем контракт обмена, покупки и продажи токенов.
-contract KorpusContract is whitelistBuyers, whitelistSellers {
+contract KorpusContract is Ownable, whitelistBuyers, whitelistSellers {
     
     // Подключаем библиотеку SafeMath.
     using SafeMath for uint256;
