@@ -1,5 +1,7 @@
 pragma solidity ^0.4.24;
 
+import "https://github.com/PlatonSterh/korpus_token/Ownable.sol";
+
 contract whitelistSellers is Ownable {
     
     mapping(address => bool) public sellers;
