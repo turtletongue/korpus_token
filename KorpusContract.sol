@@ -36,7 +36,7 @@ contract KorpusContract is Ownable, whitelistBuyers, whitelistSellers {
     // Объявляем переменную с адресом для обмена.
     address public trader;
     // Объявляем переменную с лимитом для обмена.
-    uint public tradeLimit;
+    uint public exchangeLimit;
     // Объявляем переменную с ценой токена.
     uint public buyPrice;
     // Объявляем переменную с ценой обмена токенов.
@@ -71,8 +71,8 @@ contract KorpusContract is Ownable, whitelistBuyers, whitelistSellers {
     }
     
     // Функция присваивания значения переменной лимита токенов инвестий при обмене.
-    function setTradeLimit(uint _limit) public onlyOwner {
-        tradeLimit = _limit;
+    function setExchangeLimit(uint _limit) public onlyOwner {
+        exchangeLimit = _limit;
     }
     
     //  Функция присваивания цены продажи токенов.
@@ -81,24 +81,24 @@ contract KorpusContract is Ownable, whitelistBuyers, whitelistSellers {
     }
     
     // Функция присваивания количества вей, на который можно обменять токен вклада.
-    function setSellPriceTV(uint _sellPriceTV) public onlyOwner {
-        sellPrice = _sellPriceTV;
+    function setSellPriceKTD(uint _sellPriceKTD) public onlyOwner {
+        sellPrice = _sellPriceKTD;
     }
 
     // Функция обмена токенов.
-    function trade(uint _value) public {
+    function exchangeTokens(uint _value) public {
         // Проверяем, что функцию вызвал нужный адрес.
         require(msg.sender == trader);
         // Проверяем, что не привышен лимит.
-        require(_value <= tradeLimit);
+        require(_value <= exchangeLimit);
         // Сжигамем токены инвестиции с адреса.
         tokenI.burnFrom(msg.sender, _value);
         // Переводим на адрес токены вклада со смарт-контракта.
         tokenD.mint(msg.sender, _value);
         // Ивентируем обмен.
         emit tradeComplete(msg.sender);
-        // Вычитаем из лимита число обмениваемых токенов.
-        tradeLimit = tradeLimit.sub(_value);
+        // Вычитаем из лимита число токенов, которое уже обменяли.
+        exchangeLimit = exchangeLimit.sub(_value);
     }
 
     // Внешняя функция покупки токенов инвестиции.
@@ -122,7 +122,7 @@ contract KorpusContract is Ownable, whitelistBuyers, whitelistSellers {
     }
     
     // Функция обмена токенов вклада на wei.
-    function sellTokensV(uint _value) public onlySellers {
+    function sellKTD(uint _value) public onlySellers {
         // Проверяем, установлена ли цена продажи токена.
         assert(sellPrice != 0);
         // Вычисляем стоимость продаваемых токенов в wei.
