@@ -3,7 +3,7 @@ pragma solidity ^0.5.1;
 import "https://github.com/PlatonSterh/korpus_token/Ownable.sol";
 import "https://github.com/PlatonSterh/korpus_token/SafeMath.sol";
 
-contract KorpusToken_Deposit is Ownable {
+contract KorpusToken_Investment is Ownable {
     
     // Переменная с числом выпущенных и существующих токенов.
     uint256 public totalSupply;
