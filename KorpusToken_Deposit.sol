@@ -18,16 +18,91 @@ contract KorpusToken_Deposit is Ownable {
     using SafeMath for uint256;
     // Маппинг балансов пользователей.
     mapping(address => uint256) balances;
+    pragma solidity ^0.5.1;
+
+contract Ownable {
+    address public owner;
+    address public KorpusContract;
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    
+    /**
+     * Конструктор Ownable задаёт владельца контракта с помощью аккаунта отправителя
+     */
+    constructor() public {
+        owner = msg.sender;
+    }
+     /**
+     * Выбрасывает ошибку, если вызвана любым аккаунтом, кроме владельца или смарт-контракта обмена, покупки и продажи
+     */
+    modifier onlyOwner() {
+        require((msg.sender == owner) || (msg.sender == KorpusContract));
+        _;
+    }
+    /**
+     * Позволяет текущему владельцу перевести контроль над контрактом новому владельцу.
+     */
+    function transferOwnershipWallet(address newOwner) onlyOwner public {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+    /**
+     * Позволяет назначить новый смарт-контракт обмена, покупки и продажи, передавая возможность вызывать функции.
+     */
+    function transferOwnershipContract(address newOwner) onlyOwner public {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(KorpusContract, newOwner);
+        KorpusContract = newOwner;
+    }
+}
+
+// Библиотека для защиты от переполнения uint.
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+contract KorpusToken_Deposit is Ownable {
+    
+    //Тройной маппинг для хранения результатов оценки.
+    mapping(string => mapping(string => mapping(uint256 => mapping(string => uint256)))) results;
+    
+    // Переменная с числом выпущенных и существующих токенов.
+    uint256 public totalSupply;
+    
+    // Ивент перевода токенов на другой адрес.
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    
+    // Подключаем библиотку SafeMath.
+    using SafeMath for uint256;
+    // Маппинг балансов пользователей.
+    mapping(address => uint256) balances;
     
     // Функция присвоения результата оценки по одной из осей.
-    function addStudentResult(string memory _student, uint256 _date, string memory _axis, uint256 _points) public onlyOwner {
-        results[_student][_date][_axis] = _points;
+    function addStudentResult(string memory _project, string memory _student, uint256 _date, string memory _axis, uint256 _points) public onlyOwner {
+        results[_project][_student][_date][_axis] = _points;
     }
     
     // Функция, показывающая количество баллов студента по определённой оси.
-    function studentResults(uint256 _date, string memory _student, string memory _axis) public view returns (uint256 _result) {
+    function studentResults(string memory _project, uint256 _date, string memory _student, string memory _axis) public view returns (uint256 _result) {
         // Возвращаем количество баллов.
-        return results[_student][_date][_axis];
+        return results[_project][_student][_date][_axis];
     }
 
     // Функция перевода токенов на другой адрес.
@@ -36,27 +111,28 @@ contract KorpusToken_Deposit is Ownable {
         require(_to != address(0));
         // Проверяем, что у пользователя достаточно токенов для перевода.
         require(_value <= balances[msg.sender]);
-        // Вычитаем с баланса оптравителя токены.
+        // Убираем с баланса оптравителя токены.
         balances[msg.sender] = balances[msg.sender].sub(_value);
         // Добавляем получателю на баланс токены.
         balances[_to] = balances[_to].add(_value);
         // Ивентируем перевод.
         emit Transfer(msg.sender, _to, _value);
+        // Возращает true, если перевод удался.
         return true;
     }
     
-    // Функция, показывающее баланс пользователя по адресу.
+    // Функция, показывающее баланс пользователя, через адрес.
     function balanceOf(address _owner) public view returns (uint256 balance) {
         // Возращает пользователю баланс.
         return balances[_owner];
     }
     
-    // Маппинг с адресами, которые могут использовать токены с определенных кошельков.
+    // Маппинг, позволюящий разрешить использовать токены с кошелька другому адресу.
     mapping (address => mapping (address => uint256)) internal allowed;
-    // Ивент разрешения использования токенов.
+    // Ивент о разрешении использования токенов.
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
-    // Функция перевода токенов с одного адреса на другой.
+    // Функция перевода токенов с одного адреса на другой. Не обязательно, чтобы переводимые токены были на адресе отправителя.
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         // Проверка на пустой адрес.
         require(_to != address(0));
@@ -68,20 +144,21 @@ contract KorpusToken_Deposit is Ownable {
         balances[_from] = balances[_from].sub(_value);
         // Токены начисляются на адрес получателя.
         balances[_to] = balances[_to].add(_value);
-        // Забираем право распоряжаться этим количеством токенов у адреса оптравителя.
+        // Забираем право распоряжаться этим количеством токена у адреса оптравителя.
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         // Ивентируем перевод.
         emit Transfer(_from, _to, _value);
+        // Возращает true, если перевод удался.
         return true;
     }
 
-    // Функция, показывающая количество токенов, разрешённых определённым адресом другому адресу.
+    // Функция, показывающая количество токенов, разрешённых определённым кошельком другому адресу.
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-        // Возвращаем количество разрешённых токенов.
+        // Возвращаем количство разрешённых токенов.
         return allowed[_owner][_spender];
     }
     
-    // Функция, разрешающая использовать некоторое количество токенов отправителя какому-либо кошельку.
+    // Функция, разрешающая использовать некоторое количество токенов адреса отправителя другому кошельку.
     function approve(address _spender, uint256 _value) public returns (bool) {
         // Разрешаем использовать токены другому адресу. Если до этого были разрешены какие-то токены, разрешение переназначается.
         allowed[msg.sender][_spender] = _value;
@@ -138,20 +215,21 @@ contract KorpusToken_Deposit is Ownable {
         totalSupply = totalSupply.add(_amount);
         // Создаём токены на адресе получателя.
         balances[_to] = balances[_to].add(_amount);
+        // Возвращаем true, если всё прошло успешно.
         return true;
     }
     
-    // Функция сжигания токенов вклада на определённом адресе.
+    // Функция сжигания токенов вклада на определённом адресе
     function burnFrom(address burner, uint256 _value) public {
         // Проверяем, что отправитель может сжечь это количество токенов.
         require(_value <= balances[burner]);
-        // Проверка на право отправителя распоряжаться токенами адреса burner.
+        // Проверка на то, что отправитель может использовать эти токены в переводе, имеет право их переводить.
         require(_value <= allowed[burner][msg.sender]);
-        // Отнимаем от адреса burner токены.
+        // Отнимаем от адреса отправителя токены.
         balances[burner] = balances[burner].sub(_value);
         // Уменьшаем общее количество токенов.
         totalSupply = totalSupply.sub(_value);
-        // Снимаем разрешение на использование сжигаемого количества токенов кошелька burner с адреса отправителя.
+        // Снимаем разрешение на использование сжигаемого количества токенов кошелька пользователя с адреса отправителя.
         allowed[burner][msg.sender] = allowed[burner][msg.sender].sub(_value);
     }
 }
