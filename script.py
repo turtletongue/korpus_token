@@ -7,7 +7,7 @@ def start():
     axis = ""
     points = 0
 
-    w3 = Web3(Web3.HTTPProvider("https://ropsten.infura.io/v3/35b77298442b49168bbe5a150071dd9f"))
+    w3 = Web3(Web3.HTTPProvider("https://ropsten.infura.io/v3/123"))
     account = "0xD6bAb1D6d37608a2B15677c26881892Be1650B57"
     nonce = w3.eth.getTransactionCount(account)
 
@@ -25,7 +25,7 @@ def start():
             }
         )
 
-    private_key = "7666D6EB690D0F08473B3E4C975282CC1043F5F6AC343B5516683E8D7391F52A"
+    private_key = ""
     signed_txn = w3.eth.account.signTransaction(transaction, private_key=private_key)
     txn_hash = w3.eth.sendRawTransaction(signed_txn.rawTransaction)
     print(txn_hash.hex())
