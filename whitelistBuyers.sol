@@ -16,6 +16,7 @@ contract whitelistBuyers is Ownable {
         _;
     }
 
+
     /**
      * @dev add an address to the whitelist
      * @param addr address

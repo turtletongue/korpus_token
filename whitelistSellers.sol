@@ -16,7 +16,7 @@ contract whitelistSellers is Ownable {
         require(sellers[msg.sender]);
         _;
     }
-
+ 
     /**
      * @dev add an address to the whitelist
      * @param addr address
