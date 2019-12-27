@@ -8,8 +8,8 @@ arrow_senders = []
 labels_dict = {}
 most_arrows = []
 def start_read_form():
-  form = input()
-  worksht = input()
+  form = ""
+  worksht = ""
   credentials = ServiceAccountCredentials.from_json_keyfile_name("Korpus Token-616b37e6af5d.json", scope)
   gc = gspread.authorize(credentials)
   sh = gc.open(form)
