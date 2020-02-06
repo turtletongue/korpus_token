@@ -1,4 +1,4 @@
-// Указываем версию языка для компилятора.
+// Указываем версию языка для компилятора. abc
 pragma solidity ^0.4.24;
 
 import "https://github.com/PlatonSterh/korpus_token/Ownable.sol";
