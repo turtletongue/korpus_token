@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity >=0.6.0 <=0.8.0;
 
 // Импортируем библиотеку для контроля доступа.
 // Она позволяет управлять ролями пользователей.
 import "@openzeppelin/contracts/access/AccessControl.sol";
-
-// Импортируем библиотеку, защищающую числа от переполнения.
-import "@openzeppelin/contracts/math/SafeMath.sol";
 
 // Импортируем whitelist для покупателей токенов инвестиций.
 import "./whitelistBuyers.sol";
@@ -29,9 +26,6 @@ interface KorpusToken_Deposit {
 }
 
 contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
-    // Защищаем числа от переполнения.
-    using SafeMath for uint256;
-
     // Объявляем ивент обмена токенов.
     event tradeComplete(address trader, uint256 amount);
 
@@ -145,7 +139,7 @@ contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
         // Создаем на адресе пользователя токены вклада.
         _tokenD.mint(msg.sender, TKNbits);
         // Вычитаем из лимита число токенов, которое уже обменяли.
-        _exchangeLimit = _exchangeLimit.sub(TKNbits);
+        _exchangeLimit = _exchangeLimit - TKNbits;
         // Ивентируем обмен.
         emit tradeComplete(msg.sender, TKNbits);
     }
@@ -154,7 +148,7 @@ contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
     function _buy(address sender, uint256 amount) internal returns (uint256) {
         // Рассчитываем количество купленных токенов и приводим к TKNbits.
         uint256 TKNbits =
-            (amount.mul(1000000000000000000)).div(getBuyPriceKTI());
+            (amount * 1000000000000000000) / getBuyPriceKTI();
         // Создаем токены инвестиции на адресе пользователя.
         _tokenI.mint(sender, TKNbits);
         // Возвращаем количество купленных токенов.
@@ -174,11 +168,11 @@ contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
         // Проверяем, что число не меньше нуля.
         require(TKNbits >= 0);
         // Вычисляем стоимость продаваемых токенов в wei.
-        uint256 valueWEI = (TKNbits.div(1000000000000000000)).mul(getSellPriceKTD());
+        uint256 valueWEI = (TKNbits / 1000000000000000000) * getSellPriceKTD();
         // Сжигаем токены вклада с адреса.
         _tokenD.burnFrom(msg.sender, TKNbits);
         // Отправляем wei на кошелёк получателя.
-        msg.sender.transfer(valueWEI);
+        payable(msg.sender).transfer(valueWEI);
     }
 
     // Функция отправки на адрес wei со смарт-контракта.
