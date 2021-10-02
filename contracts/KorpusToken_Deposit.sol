@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity >=0.6.0 <=0.8.0;
 
 // Импортируем библиотеку для контроля доступа.
 // Она позволяет управлять ролями пользователей.
@@ -9,9 +9,6 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract KorpusToken_Deposit is ERC20, AccessControl {
-    // Защищаем числа от переполнения.
-    using SafeMath for uint256;
-
     // Передаём коструктору ERC20 имя и сокращение токена.
     constructor() ERC20("KorpusToken_Deposit", "KTD") {
         // Уставливаем роль администратора создателю токенов.
@@ -60,7 +57,7 @@ contract KorpusToken_Deposit is ERC20, AccessControl {
 
     function burnFrom(address account, uint256 amount) public {
         require(hasRole(BURNER_ROLE, msg.sender), "Caller is not a burner");
-        uint256 decreasedAllowance = allowance(account, msg.sender).sub(amount, "ERC20: burn amount exceeds allowance");
+        uint256 decreasedAllowance = allowance(account, msg.sender) - amount;
         _approve(account, msg.sender, decreasedAllowance);
         _burn(account, amount);
     }
