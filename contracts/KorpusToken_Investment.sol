@@ -13,6 +13,8 @@ contract KorpusToken_Investment is ERC20, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     // Создаём роль, обладающую правами на сжигание токенов.
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
+    
+    bytes32 public constant BLOCK_ROLE = keccak256("BLOCK_ROLE");
 
     // Передаём коструктору ERC20 имя и сокращение токена.
     constructor() ERC20("KorpusToken_Investment", "KTI") {
@@ -32,5 +34,18 @@ contract KorpusToken_Investment is ERC20, AccessControl {
         uint256 decreasedAllowance = allowance(account, msg.sender) - amount;
         _approve(account, msg.sender, decreasedAllowance);
         _burn(account, amount);
+    }
+    
+    function block(address account) public {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Only default admin can block account");
+        _setupRole(BLOCK_ROLE, account);
+    }
+    
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override(ERC20) {
+        if (address(this) != from) {
+            require(!hasRole(BLOCK_ROLE, to), "Token transfer refused. Receiver is blocked");
+        }
+        
+        super._beforeTokenTransfer(from, to, amount);
     }
 }
