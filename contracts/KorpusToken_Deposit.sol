@@ -22,6 +22,8 @@ contract KorpusToken_Deposit is ERC20, AccessControl {
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
     // Создаём роль для бота.
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    
+    bytes32 public constant BLOCK_ROLE = keccak256("BLOCK_ROLE");
 
     // Маппинг для хранения результатов оценки.
     // Название проекта -> ФИО студента -> Дата оценки -> Ось -> Количество баллов.
@@ -60,5 +62,18 @@ contract KorpusToken_Deposit is ERC20, AccessControl {
         uint256 decreasedAllowance = allowance(account, msg.sender) - amount;
         _approve(account, msg.sender, decreasedAllowance);
         _burn(account, amount);
+    }
+    
+    function block(address account) public {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Only default admin can block account");
+        _setupRole(BLOCK_ROLE, account);
+    }
+    
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override(ERC20) {
+        if (address(this) != from) {
+            require(!hasRole(BLOCK_ROLE, to), "Token transfer refused. Receiver is blocked");
+        }
+        
+        super._beforeTokenTransfer(from, to, amount);
     }
 }
