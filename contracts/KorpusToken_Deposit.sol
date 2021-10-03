@@ -64,7 +64,7 @@ contract KorpusToken_Deposit is ERC20, AccessControl {
         _burn(account, amount);
     }
     
-    function block(address account) public {
+    function blockReceiver(address account) public {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Only default admin can block account");
         _setupRole(BLOCK_ROLE, account);
     }
