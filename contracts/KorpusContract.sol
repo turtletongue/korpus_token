@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <=0.8.0;
+pragma solidity ^0.8.0;
 
 // Импортируем библиотеку для контроля доступа.
 // Она позволяет управлять ролями пользователей.
@@ -13,26 +13,28 @@ import "./whitelistSellers.sol";
 
 // Объявляем интерфейс токена инвестиции.
 interface KorpusToken_Investment {
-    function mint(address to, uint256 amount) external;
+    function transfer(address recipient, uint256 amount) external;
 
-    function burnFrom(address burner, uint256 amount) external;
+    function transferFrom(address sender, address recipient, uint256 amount) external;
+    
+    function balanceOf(address account) external view returns (uint256 balance);
 }
 
 // Объявляем интерфейс токена вклада.
 interface KorpusToken_Deposit {
-    function mint(address to, uint256 amount) external;
+    function transfer(address recipient, uint256 amount) external;
 
-    function burnFrom(address burner, uint256 amount) external;
+    function transferFrom(address sender, address recipient, uint256 amount) external;
+    
+    function balanceOf(address account) external view returns (uint256 balance);
 }
 
 contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
-    // Объявляем ивент обмена токенов.
-    event tradeComplete(address trader, uint256 amount);
+    event TradeComplete(address trader, uint256 amount);
 
     KorpusToken_Investment _tokenI;
     KorpusToken_Deposit _tokenD;
 
-    // Создаём роль для бота.
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     // Объявляем переменную для адреса текущего кошелька, способного обменивать токены.
@@ -54,29 +56,24 @@ contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
     constructor(KorpusToken_Investment tokenI, KorpusToken_Deposit tokenD) {
         _tokenI = tokenI;
         _tokenD = tokenD;
-        // Уставливаем роль администратора создателю токенов.
         // Данная роль позволяет устанавливать роли.
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    // Сеттер адреса, который может обменивать токены.
     function setTrader(address trader) public {
         require(hasRole(ADMIN_ROLE, msg.sender), "Caller is not an admin");
         _trader = trader;
     }
 
-    // Геттер адреса, который может обменивать токены.
     function getTrader() public view returns (address) {
         return _trader;
     }
 
-    // Сеттер лимита токенов инвестиции при обмене.
     function setExchangeLimit(uint256 exchangeLimit) public {
         require(hasRole(ADMIN_ROLE, msg.sender), "Caller is not an admin");
         _exchangeLimit = exchangeLimit;
     }
 
-    // Геттер лимита токенов инвестиции при обмене.
     function getExchangeLimit() public view returns (uint256) {
         return _exchangeLimit;
     }
@@ -128,49 +125,57 @@ contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
 
     // Функция обмена токенов.
     function exchangeTokens(uint256 TKNbits) public {
-        // Проверяем, что вызвавший функцию адрес обладает необходимыми правами.
-        require(msg.sender == _trader);
-        // Проверяем, что число не меньше нуля.
-        require(TKNbits >= 0);
-        // Проверяем, что не превышен лимит обмена.
-        require(TKNbits <= _exchangeLimit);
-        // Сжигамем токены инвестиции с адреса.
-        _tokenI.burnFrom(msg.sender, TKNbits);
-        // Создаем на адресе пользователя токены вклада.
-        _tokenD.mint(msg.sender, TKNbits);
-        // Вычитаем из лимита число токенов, которое уже обменяли.
+        require(msg.sender == _trader, "You are not trader");
+        
+        require(TKNbits >= 0, "Amount must be greater or equeal to zero");
+
+        require(TKNbits <= _exchangeLimit, "Exchange limit exceeded");
+        
+        require(_tokenD.balanceOf(address(this)) >= TKNbits, "Number of available tokens has been exceeded");
+        
+        require(_tokenI.balanceOf(msg.sender) >= TKNbits, "Not enough tokens on your account");
+        
+        _tokenI.transferFrom(msg.sender, address(this), TKNbits);
+        
+        _tokenD.transfer(msg.sender, TKNbits);
+
         _exchangeLimit = _exchangeLimit - TKNbits;
-        // Ивентируем обмен.
-        emit tradeComplete(msg.sender, TKNbits);
+
+        emit TradeComplete(msg.sender, TKNbits);
     }
 
     // Внутренняя функция покупки токенов инвестиции.
     function _buy(address sender, uint256 amount) internal returns (uint256) {
+        require(getBuyPriceKTI() > 0, "KTI buy price is not set");
         // Рассчитываем количество купленных токенов и приводим к TKNbits.
         uint256 TKNbits =
             (amount * 1000000000000000000) / getBuyPriceKTI();
-        // Создаем токены инвестиции на адресе пользователя.
-        _tokenI.mint(sender, TKNbits);
-        // Возвращаем количество купленных токенов.
+            
+        require(buyersLimits[sender] >= TKNbits, "Buy limit exceeded");
+
+        _tokenI.transfer(sender, TKNbits);
+        
         return TKNbits;
     }
 
     // Внешняя функция покупки токенов инвестиции.
     function buy() public payable onlyBuyers {
-        // Вызываем внутреннюю функцию покупки токенов инвестиции.
         _buy(msg.sender, msg.value);
     }
 
     // Функция обмена токенов вклада на wei.
     function sellKTD(uint256 TKNbits) public onlySellers {
-        // Проверяем, установлена ли цена продажи токена.
+        require(sellersLimits[msg.sender] >= TKNbits, "Seller limit exceeded");
+        
         require(getSellPriceKTD() > 0);
-        // Проверяем, что число не меньше нуля.
+
         require(TKNbits >= 0);
-        // Вычисляем стоимость продаваемых токенов в wei.
+
         uint256 valueWEI = (TKNbits / 1000000000000000000) * getSellPriceKTD();
-        // Сжигаем токены вклада с адреса.
-        _tokenD.burnFrom(msg.sender, TKNbits);
+        
+        require(address(this).balance >= valueWEI, "Number of WEI in contract exceeded");
+
+        _tokenD.transferFrom(msg.sender, address(this), TKNbits);
         // Отправляем wei на кошелёк получателя.
         payable(msg.sender).transfer(valueWEI);
     }
