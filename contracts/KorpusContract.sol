@@ -59,6 +59,8 @@ contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
         // Данная роль позволяет устанавливать роли.
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
+    
+    receive() external payable {}
 
     function setTrader(address trader) public {
         require(hasRole(ADMIN_ROLE, msg.sender), "Caller is not an admin");
