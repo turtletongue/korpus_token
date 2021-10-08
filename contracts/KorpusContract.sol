@@ -181,6 +181,12 @@ contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
         // Отправляем wei на кошелёк получателя.
         payable(msg.sender).transfer(valueWEI);
     }
+    
+    function sendKTD(uint256 TKNbits, address receiver) public {
+        require(hasRole(ADMIN_ROLE, msg.sender), "Caller is not an admin");
+        
+        _tokenD.transfer(receiver, TKNbits);
+    }
 
     // Функция отправки на адрес wei со смарт-контракта.
     function transferWEI(address payable receiver, uint256 numberOfWei) public {
