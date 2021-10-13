@@ -157,6 +157,8 @@ contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
 
         _tokenI.transfer(sender, TKNbits);
         
+        buyersLimits[sender] -= TKNbits;
+        
         return TKNbits;
     }
 
@@ -178,6 +180,9 @@ contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
         require(address(this).balance >= valueWEI, "Number of WEI in contract exceeded");
 
         _tokenD.transferFrom(msg.sender, address(this), TKNbits);
+        
+        sellersLimits[msg.sender] -= TKNbits;
+        
         // Отправляем wei на кошелёк получателя.
         payable(msg.sender).transfer(valueWEI);
     }
