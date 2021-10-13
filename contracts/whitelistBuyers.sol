@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity >=0.6.0 <=0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract whitelistBuyers is Ownable {
     mapping(address => bool) public buyers;
+    mapping(address => uint256) public buyersLimits;
 
     event buyersAddressAdded(address addr);
     event buyersAddressRemoved(address addr);
@@ -14,13 +15,14 @@ contract whitelistBuyers is Ownable {
         _;
     }
 
-    function addAddressToBuyers(address addr)
+    function addAddressToBuyers(address addr, uint256 limit)
         public
         onlyOwner
         returns (bool success)
     {
-        if (!buyers[addr]) {
+        if (limit >= 0) {
             buyers[addr] = true;
+            buyersLimits[addr] = limit;
             emit buyersAddressAdded(addr);
             success = true;
         }
@@ -33,6 +35,7 @@ contract whitelistBuyers is Ownable {
     {
         if (buyers[addr]) {
             buyers[addr] = false;
+            buyersLimits[addr] = 0;
             emit buyersAddressRemoved(addr);
             success = true;
         }
