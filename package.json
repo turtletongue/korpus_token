@@ -9,7 +9,7 @@
   "author": "PlatonSterh",
   "license": "ISC",
   "devDependencies": {
-    "@openzeppelin/contracts": "^4.4.2",
+    "@openzeppelin/contracts": "^4.7.1",
     "@truffle/hdwallet-provider": "^1.2.1",
     "ganache-cli": "^6.12.1",
     "truffle": "^5.1.61"
