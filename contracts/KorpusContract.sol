@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 // Импортируем библиотеку для контроля доступа.
 // Она позволяет управлять ролями пользователей.
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts@4.9.5/access/AccessControl.sol";
 
 // Импортируем whitelist для покупателей токенов инвестиций.
 import "./whitelistBuyers.sol";
@@ -27,6 +27,8 @@ interface KorpusToken_Deposit {
     function transferFrom(address sender, address recipient, uint256 amount) external;
     
     function balanceOf(address account) external view returns (uint256 balance);
+
+    function mint(address to, uint256 amount) external;
 }
 
 contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
@@ -52,6 +54,9 @@ contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
     // Маппинг хранения информации о бюджете.
     // Дата -> Статья бюджета -> Количество потраченных денег.
     mapping(uint256 => mapping(string => uint256)) budget;
+
+    // Баланс пользователей, синхронизированный с базой данных
+    mapping(address => uint256) virtualBalanceOf;
 
     constructor(KorpusToken_Investment tokenI, KorpusToken_Deposit tokenD) {
         _tokenI = tokenI;
@@ -123,6 +128,26 @@ contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
         returns (uint256)
     {
         return budget[date][budgetItem];
+    }
+
+    function increaseVirtualBalance(address user, uint256 amount) public {
+        require(hasRole(ADMIN_ROLE, msg.sender), "Caller is not an admin");
+        virtualBalanceOf[user] += amount;
+    }
+
+    function decreaseVirtualBalance(address user, uint256 amount) public {
+        require(hasRole(ADMIN_ROLE, msg.sender), "Caller is not an admin");
+        require(virtualBalanceOf[user] >= amount, "Insufficient balance");
+        virtualBalanceOf[user] -= amount;
+    }
+
+    function outputVirtualBalance(address user, uint256 amount) public {
+        decreaseVirtualBalance(user, amount);
+        _tokenD.mint(user, amount);
+    }
+
+    function getVirtualBalance(address user) public view returns (uint256) {
+        return virtualBalanceOf[user];
     }
 
     // Функция обмена токенов.

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <=0.8.0;
+pragma solidity >=0.6.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts@4.9.5/access/Ownable.sol";
 
 contract whitelistBuyers is Ownable {
     mapping(address => bool) public buyers;

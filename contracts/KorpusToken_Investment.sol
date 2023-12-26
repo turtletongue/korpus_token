@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 // Импортируем библиотеку для контроля доступа.
 // Она позволяет управлять ролями пользователей.
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts@4.9.5/access/AccessControl.sol";
 
 // Импортируем стандартные возможности ERC20 токена.
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts@4.9.5/token/ERC20/ERC20.sol";
 
 contract KorpusToken_Investment is ERC20, AccessControl {
     
