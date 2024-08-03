@@ -174,9 +174,8 @@ contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
     // Внутренняя функция покупки токенов инвестиции.
     function _buy(address sender, uint256 amount) internal returns (uint256) {
         require(getBuyPriceKTI() > 0, "KTI buy price is not set");
-        // Рассчитываем количество купленных токенов и приводим к TKNbits.
-        uint256 TKNbits =
-            (amount * 1000000000000000000) / getBuyPriceKTI();
+        // Рассчитываем количество купленных токенов и приводим к TKNbits (умножая на 1e18).
+        uint256 TKNbits = (amount * 1e18) / getBuyPriceKTI();
             
         require(buyersLimits[sender] >= TKNbits, "Buy limit exceeded");
 
@@ -200,7 +199,7 @@ contract KorpusContract is AccessControl, whitelistBuyers, whitelistSellers {
 
         require(TKNbits >= 0);
 
-        uint256 valueWEI = (TKNbits / 1000000000000000000) * getSellPriceKTD();
+        uint256 valueWEI = TKNbits * getSellPriceKTD() / 1e18;
         
         require(address(this).balance >= valueWEI, "Number of WEI in contract exceeded");
 
