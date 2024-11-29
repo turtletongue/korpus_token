@@ -12,6 +12,6 @@
     "@openzeppelin/contracts": "^4.4.2",
     "@truffle/hdwallet-provider": "^1.2.1",
     "ganache-cli": "^6.12.1",
-    "truffle": "^5.1.61"
+    "truffle": "^5.7.1"
   }
 }
